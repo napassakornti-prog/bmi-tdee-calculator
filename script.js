@@ -1,7 +1,5 @@
 // ===================================================================
 // ขั้นตอนที่ 1: ดึง element ต่างๆ จากหน้า HTML มาเก็บไว้ในตัวแปร
-// ทำแบบนี้ครั้งเดียวตอนเริ่มไฟล์ เพื่อไม่ต้องเรียก document.getElementById
-// ซ้ำๆ ทุกครั้งที่ต้องใช้งาน element เดิม
 // ===================================================================
 const form = document.getElementById("bmi-form");
 const heightInput = document.getElementById("height");
@@ -15,21 +13,22 @@ const resultSection = document.getElementById("result");
 const bmiValueEl = document.getElementById("bmi-value");
 const bmiCategoryEl = document.getElementById("bmi-category");
 const tdeeValueEl = document.getElementById("tdee-value");
+const gaugePin = document.getElementById("gauge-pin");
+
+const themeToggleBtn = document.getElementById("theme-toggle");
+const themeIcon = document.getElementById("theme-icon");
 
 // ===================================================================
 // ขั้นตอนที่ 2: ฟังก์ชันคำนวณ BMI
 // สูตร BMI = น้ำหนัก (กก.) หาร ด้วย ส่วนสูง (เมตร) ยกกำลังสอง
-// รับพารามิเตอร์เป็นตัวเลข คืนค่าเป็นตัวเลข (ยังไม่ปัดทศนิยม)
 // ===================================================================
 function calculateBMI(weightKg, heightCm) {
-  const heightM = heightCm / 100; // แปลงหน่วยจากเซนติเมตรเป็นเมตร
+  const heightM = heightCm / 100;
   return weightKg / (heightM * heightM);
 }
 
 // ===================================================================
 // ขั้นตอนที่ 3: ฟังก์ชันแปลงค่า BMI เป็นหมวดหมู่ (ผอม/ปกติ/เกิน/อ้วน)
-// ใช้เกณฑ์มาตรฐานของกระทรวงสาธารณสุข/WHO (แบบเอเชีย)
-// คืนค่าเป็น object ที่มีทั้งข้อความและชื่อ class สำหรับใส่สี badge
 // ===================================================================
 function getBMICategory(bmi) {
   if (bmi < 18.5) {
@@ -45,8 +44,6 @@ function getBMICategory(bmi) {
 
 // ===================================================================
 // ขั้นตอนที่ 4: ฟังก์ชันคำนวณ BMR ด้วยสูตร Mifflin-St Jeor
-// BMR คือพลังงานที่ร่างกายใช้ตอนพัก (ยังไม่รวมกิจกรรม)
-// สูตรของชายและหญิงต่างกันที่ค่าคงที่ท้ายสุด (+5 หรือ -161)
 // ===================================================================
 function calculateBMR(weightKg, heightCm, age, gender) {
   const base = 10 * weightKg + 6.25 * heightCm - 5 * age;
@@ -58,9 +55,7 @@ function calculateBMR(weightKg, heightCm, age, gender) {
 }
 
 // ===================================================================
-// ขั้นตอนที่ 5: ฟังก์ชันคำนวณ TDEE
-// TDEE = BMR คูณด้วยตัวคูณกิจกรรม (activityFactor)
-// ตัวคูณนี้มาจากค่า value ของ <option> ที่ผู้ใช้เลือกในหน้าเว็บ
+// ขั้นตอนที่ 5: ฟังก์ชันคำนวณ TDEE = BMR คูณตัวคูณกิจกรรม
 // ===================================================================
 function calculateTDEE(bmr, activityFactor) {
   return bmr * activityFactor;
@@ -68,8 +63,6 @@ function calculateTDEE(bmr, activityFactor) {
 
 // ===================================================================
 // ขั้นตอนที่ 6: ฟังก์ชันตรวจสอบความถูกต้องของข้อมูล (validation)
-// ป้องกันกรณีผู้ใช้ปล่อยว่าง, กรอกตัวหนังสือ, หรือกรอกเลขติดลบ/ผิดช่วง
-// คืนค่าเป็นข้อความ error ถ้าพบปัญหา หรือคืนค่า "" (ว่าง) ถ้าข้อมูลถูกต้อง
 // ===================================================================
 function validateInputs(weightKg, heightCm, age) {
   if (Number.isNaN(weightKg) || Number.isNaN(heightCm) || Number.isNaN(age)) {
@@ -97,58 +90,130 @@ function showError(message) {
 }
 
 // ===================================================================
-// ขั้นตอนที่ 8: ฟังก์ชันแสดงผลลัพธ์บนหน้าเว็บ
-// ใช้ template literal (backtick + ${}) ในการประกอบข้อความ
-// ตามกติกาของวิชาที่กำหนดให้ใช้ template literal แทนการต่อ string ด้วย +
+// ขั้นตอนที่ 8: ฟังก์ชันนับตัวเลขไล่ขึ้นแบบ animate (count-up)
+// รับ element, ค่าเป้าหมาย, และจำนวนทศนิยมที่ต้องการ
+// ใช้ requestAnimationFrame เพื่อให้ animation ลื่นไหลตามรอบการวาดของเบราว์เซอร์
+// ===================================================================
+function animateCountUp(element, targetValue, decimals, suffix) {
+  const durationMs = 700;
+  const startTime = performance.now();
+  const startValue = 0;
+
+  function step(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / durationMs, 1); // ไม่ให้เกิน 1 (100%)
+    const currentValue = startValue + (targetValue - startValue) * progress;
+
+    element.textContent = `${currentValue.toFixed(decimals)}${suffix}`;
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
+// ===================================================================
+// ขั้นตอนที่ 9: ฟังก์ชันขยับหมุด (pin) บนแถบ gauge ไปตามค่า BMI
+// แปลงค่า BMI ให้เป็นตำแหน่งเปอร์เซ็นต์ (0-100%) บนแถบ
+// ใช้ช่วง BMI 12-40 เป็นขอบเขตของแถบทั้งหมด
+// หมายเหตุ: ใช้ element.style ตรงนี้เพราะตำแหน่งเป็นค่าที่คำนวณสดจากข้อมูลผู้ใช้
+// ไม่สามารถกำหนดตายตัวไว้ล่วงหน้าใน CSS ได้ ต่างจาก inline style ที่เขียนลงใน HTML ตรงๆ
+// ===================================================================
+function updateGaugePin(bmi) {
+  const minBMI = 12;
+  const maxBMI = 40;
+  let percent = ((bmi - minBMI) / (maxBMI - minBMI)) * 100;
+
+  // ป้องกันไม่ให้หมุดหลุดออกนอกแถบ ถ้า BMI ต่ำ/สูงเกินขอบเขต
+  percent = Math.max(0, Math.min(100, percent));
+
+  gaugePin.style.left = `${percent}%`;
+}
+
+// ===================================================================
+// ขั้นตอนที่ 10: ฟังก์ชันแสดงผลลัพธ์บนหน้าเว็บ
 // ===================================================================
 function displayResult(bmi, category, tdee) {
   errorMessage.hidden = true;
 
-  bmiValueEl.textContent = `${bmi.toFixed(1)}`;
+  animateCountUp(bmiValueEl, bmi, 1, "");
+  animateCountUp(tdeeValueEl, tdee, 0, " กิโลแคลอรี/วัน");
 
   bmiCategoryEl.textContent = `${category.label}`;
-  // รีเซ็ต class เดิมก่อน แล้วค่อยใส่ class สีใหม่ตามหมวดหมู่
   bmiCategoryEl.className = `result__badge ${category.className}`;
 
-  tdeeValueEl.textContent = `${Math.round(tdee)} กิโลแคลอรี/วัน`;
+  updateGaugePin(bmi);
 
   resultSection.hidden = false;
 }
 
 // ===================================================================
-// ขั้นตอนที่ 9: ฟังก์ชันหลักที่ทำงานเมื่อผู้ใช้กดปุ่ม "คำนวณผลลัพธ์"
-// รวบรวมทุกฟังก์ชันด้านบนมาทำงานร่วมกันตามลำดับ
+// ขั้นตอนที่ 11: ฟังก์ชันหลักที่ทำงานเมื่อผู้ใช้กดปุ่ม "คำนวณผลลัพธ์"
 // ===================================================================
 function handleFormSubmit(event) {
-  event.preventDefault(); // ป้องกันไม่ให้หน้าเว็บ refresh เมื่อ submit ฟอร์ม
+  event.preventDefault();
 
-  // แปลงค่าจาก input (ที่เป็น string) ให้เป็นตัวเลขด้วย parseFloat
   const weightKg = parseFloat(weightInput.value);
   const heightCm = parseFloat(heightInput.value);
   const age = parseFloat(ageInput.value);
   const gender = genderSelect.value;
   const activityFactor = parseFloat(activitySelect.value);
 
-  // ตรวจสอบข้อมูลก่อนคำนวณเสมอ
   const errorText = validateInputs(weightKg, heightCm, age);
   if (errorText !== "") {
     showError(errorText);
-    return; // หยุดการทำงานทันที ไม่คำนวณต่อ
+    return;
   }
 
-  // คำนวณค่าต่างๆ ตามลำดับ
   const bmi = calculateBMI(weightKg, heightCm);
   const category = getBMICategory(bmi);
   const bmr = calculateBMR(weightKg, heightCm, age, gender);
   const tdee = calculateTDEE(bmr, activityFactor);
 
-  // แสดงผลลัพธ์บนหน้าเว็บ
   displayResult(bmi, category, tdee);
 }
 
 // ===================================================================
-// ขั้นตอนที่ 10: ผูก event เข้ากับฟอร์ม
-// ใช้ addEventListener เท่านั้น (ห้ามใช้ onclick ใน HTML ตามกติกา)
-// เมื่อฟอร์มถูก submit (กดปุ่ม หรือกด Enter) ให้เรียก handleFormSubmit
+// ขั้นตอนที่ 12: ฟังก์ชันสลับโหมดมืด/สว่าง
+// ทำงานโดยสลับ attribute data-theme บนแท็ก <html>
+// ค่า CSS variables ทั้งหมดจะเปลี่ยนตาม (ดูใน style.css)
+// เก็บค่าที่ผู้ใช้เลือกไว้ใน localStorage เพื่อจำไว้ในครั้งถัดไป
+// ===================================================================
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  themeIcon.textContent = theme === "dark" ? "☀️" : "🌙";
+  localStorage.setItem("bmi-app-theme", theme);
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute("data-theme");
+  const nextTheme = currentTheme === "dark" ? "light" : "dark";
+  applyTheme(nextTheme);
+}
+
+// ===================================================================
+// ขั้นตอนที่ 13: ตั้งค่าธีมเริ่มต้นตอนโหลดหน้าเว็บ
+// ถ้าผู้ใช้เคยเลือกไว้ใน localStorage ให้ใช้ค่านั้น
+// ถ้าไม่เคยเลือก ให้เดาจากการตั้งค่าระบบปฏิบัติการของผู้ใช้ (prefers-color-scheme)
+// ===================================================================
+function setInitialTheme() {
+  const savedTheme = localStorage.getItem("bmi-app-theme");
+
+  if (savedTheme) {
+    applyTheme(savedTheme);
+    return;
+  }
+
+  const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  applyTheme(systemPrefersDark ? "dark" : "light");
+}
+
+// ===================================================================
+// ขั้นตอนที่ 14: ผูก event ทั้งหมด (ใช้ addEventListener เท่านั้น)
 // ===================================================================
 form.addEventListener("submit", handleFormSubmit);
+themeToggleBtn.addEventListener("click", toggleTheme);
+
+setInitialTheme();
