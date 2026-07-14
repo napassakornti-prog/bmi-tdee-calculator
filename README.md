@@ -7,7 +7,7 @@
 **รหัสนักศึกษา:** [6715400050277-1]
 
 ## เว็บไซต์ใช้งานจริง
-[ใส่ลิงก์ GitHub Pages หลังจาก deploy เสร็จ เช่น https://username.github.io/bmi-tdee-calculator/]
+[https://napassakornti-prog.github.io/bmi-tdee-calculator/]
 
 ## โปรแกรมทำอะไรได้บ้าง
 - กรอกส่วนสูง น้ำหนัก อายุ เพศ และระดับกิจกรรมในแต่ละวัน
