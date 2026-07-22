@@ -224,6 +224,19 @@ select:focus {
   animation: card-enter 0.4s ease;
 }
 
+/* ป้องกันไม่ให้ .result { display: grid; } ด้านบนไปทับ attribute hidden
+   ถ้าไม่มีบรรทัดนี้ ผลลัพธ์จะโชว์ตลอดเวลาแม้ยังไม่ได้กดคำนวณ
+   เพราะ display: grid ที่เราเขียนเองมีผลชนะ display: none ของ hidden */
+.result[hidden] {
+  display: none;
+}
+
+/* แก้บั๊ก: attribute [hidden] ของ HTML ต้องชนะ class .result เสมอ
+   ไม่งั้น display: grid ด้านบนจะทำให้ element โชว์ทั้งที่มี hidden อยู่ */
+.result[hidden] {
+  display: none;
+}
+
 .result__block {
   padding: 18px;
   border-radius: 14px;
@@ -305,6 +318,21 @@ select:focus {
   margin-top: 6px;
   font-size: 11px;
   color: var(--color-muted);
+}
+
+/* ---------- footer แสดงชื่อผู้พัฒนาและรายวิชา ---------- */
+.card__footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.card__footer p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-muted);
+  line-height: 1.6;
 }
 
 /* ---------- ปรับสำหรับจอมือถือ ---------- */
